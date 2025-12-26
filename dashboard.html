@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CERBERUS | Gestión RAMAL</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root { --azul: #1A365D; --oro: #FFD700; --fondo: #F4F7FE; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: sans-serif; background: var(--fondo); display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Lateral */
+        .sidebar { width: 250px; background: var(--azul); color: white; padding: 20px; flex-shrink: 0; z-index: 100; }
+        .sidebar h2 { color: var(--oro); margin-bottom: 30px; text-align: center; }
+        .btn-menu { width: 100%; padding: 15px; background: none; border: none; color: white; text-align: left; cursor: pointer; font-size: 16px; border-radius: 8px; margin-bottom: 5px; }
+        .btn-menu:hover { background: rgba(255,255,255,0.1); }
+        .btn-menu.active { background: var(--oro) !important; color: var(--azul) !important; font-weight: bold; }
+
+        /* Contenido Principal */
+        .main { flex-grow: 1; padding: 30px; overflow-y: auto; position: relative; }
+        .seccion { display: none; } /* Controlado por JS */
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .input-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .search-bar { width: 100%; padding: 10px; border: 2px solid var(--oro); border-radius: 8px; margin-bottom: 10px; }
+        
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; width: 100%; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; font-size: 12px; }
+        th { background: #f8f8f8; color: var(--azul); position: sticky; top: 0; }
+        
+        .editable { border: none; background: transparent; width: 100%; padding: 4px; border-bottom: 1px solid transparent; }
+        .editable:focus { background: #fffde7; outline: none; border-bottom: 1px solid var(--oro); }
+        
+        .btn-accion { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; margin: 2px; }
+        .bg-verde { background: #48BB78; }
+        .bg-rojo { background: #F56565; }
+        .bg-azul { background: #4299E1; }
+        .btn-pdf { background: #718096; }
+        
+        .st-prog { color: #B7791F; font-weight: bold; }
+        .st-ejec { color: #2F855A; font-weight: bold; }
+        h3 { margin-top: 25px; color: var(--azul); border-left: 4px solid var(--oro); padding-left: 10px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>CERBERUS</h2>
+        <button class="btn-menu active" onclick="abrir('panel', this)"><i class="fas fa-chart-line"></i> Panel General</button>
+        <button class="btn-menu" onclick="abrir('facturacion', this)"><i class="fas fa-file-invoice"></i> Facturación</button>
+        <button class="btn-menu" onclick="abrir('inventario', this)"><i class="fas fa-boxes"></i> Inventario</button>
+        <button class="btn-menu" onclick="abrir('tickets', this)"><i class="fas fa-tools"></i> Tickets</button>
+        <br><br>
+        <a href="index.html" style="color:white; text-decoration:none; padding:15px; display:block;"><i class="fas fa-power-off"></i> Salir</a>
+    </div>
+
+    <div class="main">
+        <div id="panel" class="seccion" style="display: block;">
+            <h1>Panel de Control</h1>
+            <div class="card"><p>Bienvenido al sistema RAMAL Cerberus. Todas las secciones están listas.</p></div>
+        </div>
+
+        <div id="facturacion" class="seccion">
+            <div class="header-flex">
+                <h1>Facturación</h1>
+                <button class="btn-accion btn-pdf" onclick="exportarPDF('facturacion', 'tb-f')"><i class="fas fa-file-pdf"></i> PDF</button>
+            </div>
+            <div class="card">
+                <input type="text" class="search-bar" placeholder="Buscar cliente o factura..." onkeyup="buscar('tb-f', this.value)">
+                <div class="input-group">
+                    <input type="text" id="fn" placeholder="N° Fact">
+                    <input type="text" id="fc" placeholder="Cliente">
+                    <input type="number" id="fm" placeholder="Monto Bs.">
+                    <input type="date" id="ff">
+                    <input type="time" id="fh">
+                    <button class="btn-accion bg-verde" onclick="addF()">Guardar</button>
+                </div>
+                <table>
+                    <thead><tr><th>N° Fact</th><th>Cliente</th><th>Monto</th><th>Fecha</th><th>Hora</th><th>X</th></tr></thead>
+                    <tbody id="tb-f"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="inventario" class="seccion">
+            <div class="header-flex">
+                <h1>Inventario</h1>
+                <button class="btn-accion btn-pdf" onclick="exportarPDF('inventario', 'tb-i')"><i class="fas fa-file-pdf"></i> PDF</button>
+            </div>
+            <div class="card">
+                <input type="text" class="search-bar" placeholder="Buscar material..." onkeyup="buscar('tb-i', this.value)">
+                <div class="input-group">
+                    <input type="text" id="in" placeholder="Nombre Material">
+                    <input type="number" id="ic" placeholder="Cantidad">
+                    <button class="btn-accion bg-verde" onclick="addI()">Añadir</button>
+                </div>
+                <table>
+                    <thead><tr><th>Material (Editable)</th><th>Stock (Editable)</th><th>Borrar</th></tr></thead>
+                    <tbody id="tb-i"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tickets" class="seccion">
+            <div class="header-flex">
+                <h1>Gestión de Tickets</h1>
+                <button class="btn-accion btn-pdf" onclick="exportarPDF('tickets', 'tb-t-all')"><i class="fas fa-print"></i> Reporte</button>
+            </div>
+            <div class="card">
+                <input type="text" class="search-bar" placeholder="Buscar en tickets..." onkeyup="buscar('tickets-container', this.value)">
+                <div class="input-group">
+                    <input type="text" id="tc" placeholder="Cliente">
+                    <select id="tt">
+                        <option>Instalación Fibra</option>
+                        <option>Instalación TV</option>
+                        <option>Mantenimiento FTTH</option>
+                        <option>Mantenimiento RG6</option>
+                    </select>
+                    <input type="text" id="ttec" placeholder="Técnico">
+                    <input type="date" id="tf">
+                    <input type="time" id="th">
+                    <button class="btn-accion bg-verde" onclick="addT()">Programar</button>
+                </div>
+
+                <div id="tickets-container">
+                    <h3>Tickets Programados</h3>
+                    <table>
+                        <thead><tr><th>Cliente</th><th>Tipo</th><th>Técnico (Ed.)</th><th>Fecha (Ed.)</th><th>Hora (Ed.)</th><th>Estado</th><th>Acción</th></tr></thead>
+                        <tbody id="tb-t-prog"></tbody>
+                    </table>
+
+                    <h3>Historial de Ejecutados</h3>
+                    <table>
+                        <thead><tr><th>Cliente</th><th>Tipo</th><th>Técnico (Ed.)</th><th>Fecha (Ed.)</th><th>Hora (Ed.)</th><th>Estado</th><th>Acción</th></tr></thead>
+                        <tbody id="tb-t-ejec"></tbody>
+                    </table>
+                </div>
+                <table id="tb-t-all" style="display:none;"><thead><tr><th>Cliente</th><th>Tipo</th><th>Tecnico</th><th>Fecha</th><th>Hora</th><th>Estado</th></tr></thead><tbody id="tb-t-all-body"></tbody></table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+    <script>
+        // NAVEGACIÓN BLINDADA (Fuerza el mostrado de secciones)
+        function abrir(id, btn) {
+            const secciones = document.querySelectorAll('.seccion');
+            secciones.forEach(s => s.style.display = 'none');
+            
+            const botones = document.querySelectorAll('.btn-menu');
+            botones.forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(id).style.display = 'block';
+            btn.classList.add('active');
+        }
+
+        function buscar(idContenedor, valor) {
+            const filas = document.getElementById(idContenedor).querySelectorAll('tr');
+            const v = valor.toLowerCase();
+            filas.forEach(f => {
+                f.style.display = f.innerText.toLowerCase().includes(v) ? '' : 'none';
+            });
+        }
+
+        // BASE DE DATOS LOCAL
+        let ramal = JSON.parse(localStorage.getItem('ramal_PRO_v1')) || {f:[], i:[], t:[]};
+
+        function render() {
+            localStorage.setItem('ramal_PRO_v1', JSON.stringify(ramal));
+            
+            // Render Facturas
+            let hF = "";
+            ramal.f.forEach((x, i) => {
+                hF += `<tr><td>${x.n}</td><td>${x.c}</td><td>${x.m} Bs</td><td>${x.f}</td><td>${x.h}</td><td><button class="btn-accion bg-rojo" onclick="del('f',${i})">X</button></td></tr>`;
+            });
+            document.getElementById('tb-f').innerHTML = hF;
+
+            // Render Inventario
+            let hI = "";
+            ramal.i.forEach((x, i) => {
+                hI += `<tr><td><input class="editable" value="${x.n}" onchange="edit('i',${i},'n',this.value)"></td><td><input class="editable" type="number" value="${x.c}" onchange="edit('i',${i},'c',this.value)"></td><td><button class="btn-accion bg-rojo" onclick="del('i',${i})">X</button></td></tr>`;
+            });
+            document.getElementById('tb-i').innerHTML = hI;
+
+            // Render Tickets
+            let hTP = "", hTE = "", hTall = "";
+            ramal.t.forEach((x, i) => {
+                let fila = `<tr>
+                    <td>${x.c}</td>
+                    <td>${x.t}</td>
+                    <td><input class="editable" value="${x.tec || ''}" onchange="edit('t',${i},'tec',this.value)"></td>
+                    <td><input class="editable" type="date" value="${x.f}" onchange="edit('t',${i},'f',this.value)"></td>
+                    <td><input class="editable" type="time" value="${x.h}" onchange="edit('t',${i},'h',this.value)"></td>
+                    <td class="${x.s==='Ejecutada'?'st-ejec':'st-prog'}">${x.s}</td>
+                    <td>
+                        <button class="btn-accion bg-azul" onclick="cambiarS(${i})"><i class="fas fa-sync"></i></button>
+                        <button class="btn-accion bg-rojo" onclick="del('t',${i})">X</button>
+                    </td>
+                </tr>`;
+                if(x.s === 'Ejecutada') hTE += fila; else hTP += fila;
+                hTall += `<tr><td>${x.c}</td><td>${x.t}</td><td>${x.tec}</td><td>${x.f}</td><td>${x.h}</td><td>${x.s}</td></tr>`;
+            });
+            document.getElementById('tb-t-prog').innerHTML = hTP;
+            document.getElementById('tb-t-ejec').innerHTML = hTE;
+            document.getElementById('tb-t-all-body').innerHTML = hTall;
+        }
+
+        function edit(cat, i, key, val) { ramal[cat][i][key] = val; render(); }
+        function cambiarS(i) { ramal.t[i].s = (ramal.t[i].s === 'Programada') ? 'Ejecutada' : 'Programada'; render(); }
+        function addF() { ramal.f.push({n:document.getElementById('fn').value, c:document.getElementById('fc').value, m:document.getElementById('fm').value, f:document.getElementById('ff').value, h:document.getElementById('fh').value}); render(); }
+        function addI() { ramal.i.push({n:document.getElementById('in').value, c:document.getElementById('ic').value}); render(); }
+        function addT() { ramal.t.push({c:document.getElementById('tc').value, t:document.getElementById('tt').value, tec:document.getElementById('ttec').value, f:document.getElementById('tf').value, h:document.getElementById('th').value, s:'Programada'}); render(); }
+        function del(cat, i) { if(confirm('¿Eliminar registro?')) { ramal[cat].splice(i,1); render(); } }
+
+        function exportarPDF(titulo, tablaId) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFontSize(16);
+            doc.text("RAMAL CERBERUS - " + titulo.toUpperCase(), 14, 15);
+            doc.autoTable({ html: '#' + tablaId, startY: 20, theme: 'grid', headStyles: {fillColor: [26, 54, 93]} });
+            doc.save(`Reporte_${titulo}.pdf`);
+        }
+
+        // Arranca el sistema
+        window.onload = render;
+    </script>
+</body>
+</html>
